@@ -1,0 +1,3 @@
+数据库配置；
+basepackage：输出的包名配置；
+outRoot：输出的文件目录。

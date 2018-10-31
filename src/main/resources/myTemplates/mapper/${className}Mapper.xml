@@ -1,0 +1,89 @@
+<#include "/macro.include"/>
+<#assign className = table.className>
+<#assign classNameLower = className?uncap_first>
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//ibatis.apache.org//DTD Mapper 3.0//EN"    "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+
+<mapper namespace="${basepackage}.dao.${className}Dao">
+
+	<resultMap id="BaseResultMap" type="${basepackage}.entity.${className}">
+        <#list table.columns as column>
+        <#if column.pk>
+        <id property="${column.columnNameLower}" column="${column.sqlName}" jdbcType="${column.jdbcType}"/>
+        <#else>
+        <result property="${column.columnNameLower}" column="${column.sqlName}" jdbcType="${column.jdbcType}"/>
+        </#if>
+        </#list>
+	</resultMap>
+
+	<!-- 用于select查询公用抽取的列 -->
+	<sql id="Base_Column_List">
+	    <![CDATA[
+		<#list table.columns as column>${column.sqlName}<#if column_has_next>,</#if></#list>
+	    ]]>
+	</sql>
+
+    <select id="get" resultMap="BaseResultMap" parameterType="java.lang.String" >
+        select
+        <include refid="Base_Column_List" />
+        from ${table.sqlName}
+        where id = <#noparse>#{</#noparse>id,jdbcType=VARCHAR<#noparse>}</#noparse>
+    </select>
+
+    <select id="get" resultMap="BaseResultMap" parameterType="${basepackage}.entity.${className}" >
+    select
+    <include refid="Base_Column_List" />
+    from ${table.sqlName}
+    <where>
+        <#list table.columns as column>
+        <if test="${column.sqlName} != null and ${column.sqlName} !='' " >
+          and  ${column.columnNameLower} = <#noparse>#{</#noparse>${column.columnNameLower},jdbcType=${column.jdbcType}<#noparse>}</#noparse>
+        </if>
+        </#list>
+    </where>
+    </select>
+
+
+
+    <delete id="delete" parameterType="java.lang.String" >
+        delete from ${table.sqlName}
+        where id = <#noparse>#{</#noparse>id,jdbcType=VARCHAR<#noparse>}</#noparse>
+    </delete>
+
+    <insert id="insert" parameterType="${basepackage}.entity.${className}" >
+        <selectKey  keyProperty="id" resultType="java.lang.String" order="BEFORE">
+            select replace(uuid(), '-', '')
+        </selectKey>
+        insert into ${table.sqlName}
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <#list table.columns as column>
+            <if test="${column.sqlName} != null and ${column.sqlName} !='' " >
+                ${column.sqlName}<#if column_has_next>,</#if>
+            </if>
+            </#list>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <#list table.columns as column>
+            <if test="${column.sqlName} != null " >
+                <#noparse>#{</#noparse>${column.columnNameLower},jdbcType=${column.jdbcType}<#noparse>}</#noparse><#if column_has_next>,</#if>
+            </if>
+            </#list>
+        </trim>
+    </insert>
+
+    <update id="update" parameterType="${basepackage}.entity.${className}">
+        update t_user
+        <set>
+            <#list table.columns as column>
+            <if test="${column.sqlName} != null and ${column.sqlName} !='' " >
+                ${column.columnNameLower} = <#noparse>#{</#noparse>${column.columnNameLower},jdbcType=${column.jdbcType}<#noparse>}</#noparse><#if column_has_next>,</#if>
+            </if>
+            </#list>
+        </set>
+        where id = <#noparse>#{</#noparse>id,jdbcType=VARCHAR<#noparse>}</#noparse>
+    </update>
+
+</mapper>
+
